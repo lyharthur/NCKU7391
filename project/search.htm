@@ -1,0 +1,126 @@
+<meta http-equiv="Content-Type" content="text/html; ; charset=utf-8">
+
+<style>
+#list{
+	border-width:1px;
+	border-style:solid;
+	overflow:hidden;
+	width:300px;
+}
+.hlight{
+	background-color:#EEEE00;
+}
+
+</style>
+
+<script>
+var pre;
+var ti;
+var Focus=0;
+var selectI=-1;
+function bb(event){
+	var listN=document.getElementById("list").children.length;
+	switch( event.keyCode){
+		case 40:
+		    var current=(selectI+listN)%listN;
+			var next=(selectI+listN+1)%listN;
+			document.getElementById("SG"+current).className="";
+			document.getElementById("SG"+next).className="hlight";
+			selectI=next;
+			break;
+		case 38:
+			if(selectI==-1) selectI=0;
+		    var current=(selectI+listN)%listN;
+			var next=(selectI+listN-1)%listN;
+			document.getElementById("SG"+current).className="";
+			document.getElementById("SG"+next).className="hlight";
+			selectI=next;
+			break;
+		case 13:
+			clearTimeout(ti);
+			at();
+			break;
+		default:
+			clearTimeout(ti);
+			ti=setTimeout(aa,500);
+	}
+}
+function aa(){
+	var l =document.getElementById("search").value;
+	if(pre!=l){
+		pre=l;
+		changeSet(l);
+	}
+}
+function changeSet(l){
+	dis();
+	var par=document.getElementById("list");
+	for(var i=par.children.length;i>0;i--)
+		par.removeChild(par.children[i-1]);
+	var oXHR=new XMLHttpRequest();//相容性問題未解決
+	para="q="+l;
+	oXHR.open("GET","q.php?"+para,true);
+	oXHR.onreadystatechange= function(){
+		if(oXHR.readyState==4 &&(oXHR.status==200||oXHR.status==304)){
+			var arrG=oXHR.responseText.split("|");
+			var par=document.getElementById("list");
+			for(var i=0;i<arrG.length;i++){
+				if(l==arrG[i]){
+					return;
+				}
+				var newobj= document.createElement("div");//建一新物件，這個物件是放一個單字，整個物件視為一項
+				newobj.id= "SG"+i; //設定ID，以方便在滑鼠移動與鍵盤操作時運算
+				newobj.onmouseover= mouseO;//設定新物件移過去呼叫之函式
+				newobj.onmousedown= at;//設定新物件點下去呼叫之函式
+				newobj.innerHTML= arrG[i];//新物件的內容設為英文單字
+				par.appendChild(newobj);//把新物件加到列表中
+			}
+			if(Focus) dis(1);
+		}
+	}
+	oXHR.send();
+	
+}
+function mouseO(){
+	var id=this.id.replace("SG","");
+	var pre=document.getElementById("SG"+selectI)
+	if(pre)pre.className="";
+	this.className="hlight";
+	selectI=id;
+}
+function at(){
+	var l=document.getElementById("SG"+selectI).innerHTML;
+	document.getElementById("search").value=l;
+	
+	var oXHR=new XMLHttpRequest();//相容性問題未解決
+	para="q="+l;
+	oXHR.open("GET","main.php?"+para,true);
+	oXHR.onreadystatechange= function(){
+		if(oXHR.readyState==4 &&(oXHR.status==200||oXHR.status==304)){
+			dis();
+			document.getElementById("main").innerHTML=oXHR.responseText;
+		}
+	}
+	oXHR.send();
+}
+function dis(sw){
+	if(sw){
+		sw="";
+	}else{
+		sw="none";
+	}
+	document.getElementById("list").style.display=sw;
+}
+</script>
+<INPUT type="text" id="search" style="position:absolute;top:0px;width:300px;" autocomplete="off" onblur="dis();Focus=0;" onfocus="Focus=1;" onkeydown="bb(event)"><br/>
+<div id="list"></div>
+<div id="main"></div>
+<script>
+dis();
+</script>
+<body background="bg.jpg">
+<div style='text-align:center'>
+</div></body>
+
+
+
